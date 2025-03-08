@@ -6,7 +6,7 @@ const ScraperResults = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        axios.get('http://127.0.0.1:5000/scrape?query=deeplearning')
+        axios.get('http://127.0.0.1:5000/scrape?query=deep%20learning')
             .then(response => {
                 setData(response.data);
                 setLoading(false);
