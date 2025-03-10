@@ -35,7 +35,7 @@ function SignIn() {
       if (response.ok) {
         setSuccessMessage("Login successful! Redirecting...");
         setTimeout(() => {
-          window.location.href = "/searchresults"; // Redirect after login
+          window.location.href = "/search"; // Redirect after login
         }, 2000);
       } else {
         setError(data.message || "Invalid email or password.");

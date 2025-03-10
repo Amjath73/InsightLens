@@ -14,23 +14,8 @@ const Navbar = () => {
         <div className="collapse navbar-collapse" id="navbarNav">
           <ul className="navbar-nav ms-auto">
             <li className="nav-item">
-              <Link className="nav-link text-light mx-2 fs-5" to="/search" style={{ transition: "0.3s" }}>
-                Search
-              </Link>
-            </li>
-            <li className="nav-item">
               <Link className="nav-link text-light mx-2 fs-5" to="/about" style={{ transition: "0.3s" }}>
                 About
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="btn btn-outline-light px-4 py-2 fw-bold rounded-pill" to="/signup">
-                Sign Up
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link className="btn btn-outline-light px-4 py-2 fw-bold rounded-pill" to="/signin">
-                Sign In
               </Link>
             </li>
           </ul>
@@ -39,5 +24,4 @@ const Navbar = () => {
     </nav>
   );
 };
-
 export default Navbar;
