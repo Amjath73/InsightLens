@@ -14,7 +14,7 @@ const App = () => {
     <Router>
       <Navbar />
       <div className="container mx-auto p-5">
-        <h1 className="text-3xl font-bold">Research Paper Scraper</h1>
+        <h1 className="text-3xl font-bold"></h1>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/search" element={<SearchResults />} />

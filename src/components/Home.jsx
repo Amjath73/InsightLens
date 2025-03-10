@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 const Home = () => {
   return (
-    <Container className="text-center mt-5">
+    <Container className="text-center mt-1"> {/* Reduced margin-top */}
       {/* Animated Heading */}
       <motion.h1
         className="display-3 fw-bold text-primary"
@@ -24,6 +24,17 @@ const Home = () => {
       >
         Search and analyze research trends effectively.
       </motion.p>
+
+      {/* Animated Image Below Heading */}
+      <motion.img
+        src="https://cdn.open-pr.com/R/a/Ra0876917_g.jpg"
+        alt="Research and Technology"
+        className="img-fluid rounded shadow-lg my-4"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1 }}
+        style={{ maxWidth: "100%", height: "auto", borderRadius: "15px" }}
+      />
 
       {/* Call-to-Action Button */}
       <motion.div
