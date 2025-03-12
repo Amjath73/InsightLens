@@ -7,7 +7,7 @@ const Home = () => {
   const navigate = useNavigate();
 
   return (
-    <Container className="text-center mt-3"> {/* Reduced top margin */}
+    <Container className="text-center mt-3" style={{ backgroundColor: "#d4ebf2 ", padding: "20px", borderRadius: "10px" }}> {/* Pastel background */}
       {/* Animated Heading */}
       <motion.h2
         className="fw-bold text-primary"

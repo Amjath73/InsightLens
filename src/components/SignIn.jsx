@@ -31,6 +31,8 @@ function SignIn() {
       });
 
       const data = await response.json();
+      // console.log(data)
+      localStorage.setItem("usertoken", data.token)
 
       if (response.ok) {
         setSuccessMessage("Login successful! Redirecting...");

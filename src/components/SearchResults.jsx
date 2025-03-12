@@ -1,17 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import axios from "axios";
 import { FaSearch } from "react-icons/fa";
+import { ProgressBar, Spinner } from "react-bootstrap";
 
 const SearchResults = () => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
-  const [showSearch, setShowSearch] = useState(true); // Keep search open by default
+  const [showSearch, setShowSearch] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [userName, setUserName] = useState(""); // Store user's name
+
   const navigate = useNavigate();
 
+
   const handleSearch = async () => {
+    setLoading(true);
+    setResults([]);
+
     try {
-      const response = await fetch(`http://127.0.0.1:5000/api/papers?query=${query}`);
+      const response = await fetch(`http://127.0.0.1:5001/api/papers?query=${query}`);
       const data = await response.json();
       console.log("API Response:", data);
 
@@ -24,11 +34,64 @@ const SearchResults = () => {
       setResults(combinedResults);
     } catch (error) {
       console.error("❌ Error fetching data:", error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleGetSummary = async (paper) => {
+    setSummaryLoading(true);
+    try {
+      const response = await fetch("http://127.0.0.1:5002/api/summary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: paper.snippet || paper.title }),
+      });
+
+      const data = await response.json();
+      if (data.summary) {
+        openSummaryWindow(paper.title, data.summary);
+      } else {
+        alert("Error fetching summary.");
+      }
+    } catch (error) {
+      console.error("Error fetching summary:", error);
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  const openSummaryWindow = (title, summary) => {
+    const newWindow = window.open("", "_blank", "width=600,height=400");
+    newWindow.document.write(`
+      <html>
+        <head>
+          <title>Research Paper Summary</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h2 { color: #007bff; }
+          </style>
+        </head>
+        <body>
+          <h2>${title}</h2>
+          <p>${summary}</p>
+        </body>
+      </html>
+    `);
+    newWindow.document.close();
   };
 
   return (
     <div className="container py-4">
+      {/* Welcome Message */}
+      {userName && (
+        <div className="text-center mb-3">
+          <h4 className="fw-bold text-primary">Welcome, {userName}!</h4>
+        </div>
+      )}
+
       {/* Search Section */}
       <div className="row justify-content-center mb-4">
         <div className="col-md-6 text-center">
@@ -50,10 +113,10 @@ const SearchResults = () => {
                 onChange={(e) => setQuery(e.target.value)}
               />
               <div className="mt-3 d-flex justify-content-center">
-                <button className="btn btn-success me-2" onClick={handleSearch}>
-                  Search
+                <button className="btn btn-success me-2" onClick={handleSearch} disabled={loading}>
+                  {loading ? "Searching..." : "Search"}
                 </button>
-                <button className="btn btn-danger" onClick={() => setShowSearch(false)}>
+                <button className="btn btn-danger" onClick={() => setShowSearch(false)} disabled={loading}>
                   Close
                 </button>
               </div>
@@ -62,9 +125,18 @@ const SearchResults = () => {
         </div>
       </div>
 
+      {/* Loading Indicator */}
+      {loading && (
+        <div className="text-center my-3">
+          <Spinner animation="border" variant="primary" />
+          <p className="mt-2 text-muted">Fetching data...</p>
+          <ProgressBar animated now={100} className="mt-2" />
+        </div>
+      )}
+
       {/* Search Results */}
       <div className="row">
-        {results.length > 0 ? (
+        {!loading && results.length > 0 ? (
           results.map((paper, index) => (
             <div className="col-md-4 mb-4" key={index}>
               <motion.div
@@ -72,13 +144,6 @@ const SearchResults = () => {
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.3 }}
                 style={{ cursor: "pointer", overflow: "hidden" }}
-                onClick={() => {
-                  if (paper._id) {
-                    navigate(`/paper/${paper._id}`);
-                  } else if (paper.link) {
-                    window.open(paper.link, "_blank");
-                  }
-                }}
               >
                 {/* Card Image */}
                 <img
@@ -95,13 +160,26 @@ const SearchResults = () => {
                   {paper.authors && <p className="text-muted mb-1 small">By {paper.authors}</p>}
                   {paper.snippet && <p className="text-secondary small">{paper.snippet.slice(0, 150)}...</p>}
                 </div>
+
+                {/* Summary Button */}
+                <div className="p-3 d-flex justify-content-center">
+                  <button 
+                    className="btn btn-info btn-sm" 
+                    onClick={() => handleGetSummary(paper)}
+                    disabled={summaryLoading}
+                  >
+                    {summaryLoading ? "Summarizing..." : "Get Summary"}
+                  </button>
+                </div>
               </motion.div>
             </div>
           ))
         ) : (
-          <div className="col-12 text-center">
-            <p className="text-muted my-4">No results found. Try a different search term.</p>
-          </div>
+          !loading && (
+            <div className="col-12 text-center">
+              <p className="text-muted my-4">No results found. Try a different search term.</p>
+            </div>
+          )
         )}
       </div>
     </div>
