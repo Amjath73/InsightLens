@@ -16,8 +16,7 @@ const App = () => {
   return (
     <Router>
       <Navbar />
-      <div className="container mx-auto p-5">
-        <h1 className="text-3xl font-bold"></h1>
+      <div className="app-container">
         <Routes>
           <Route path="/" element={<Home/>} />
           <Route path="/search" element={<SearchResults/>} />
