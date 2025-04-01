@@ -13,8 +13,7 @@ import Profile from "./components/Profile";
 import ProfilePage from "./components/Profile";
 import Community from "./components/Community";
 import GroupChat from "./components/GroupChat";
-
-
+import GroupDetail from "./components/GroupDetail";
 
 const App = () => {
   return (
@@ -32,6 +31,8 @@ const App = () => {
           <Route path="/profile"element={<Profile/>}/>
           <Route path="/community"element={<Community/>}/>
           <Route path="/groupchat"element={<GroupChat/>}/>
+          <Route path="/groupchat/:groupId" element={<GroupChat />} />
+          <Route path="/community/group/:groupId" element={<GroupDetail />} />
           
           {/* Add more routes as needed */}
         </Routes>

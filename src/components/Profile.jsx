@@ -49,6 +49,8 @@ const Profile = () => {
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem("userEmail");
+    localStorage.removeItem("userToken");
+    localStorage.removeItem("redirectPath");
     navigate("/signin");
   };
 
@@ -70,6 +72,16 @@ const Profile = () => {
 
   const handleSearchClick = (query) => {
     navigate(`/search?q=${encodeURIComponent(query)}`);
+  };
+
+  const navigateToCommunity = () => {
+    const token = localStorage.getItem("userToken");
+    if (!token) {
+      localStorage.setItem("redirectPath", "/community"); // Store the intended destination
+      navigate("/signin");
+    } else {
+      navigate("/community");
+    }
   };
 
   if (isLoading) {
@@ -260,55 +272,6 @@ const Profile = () => {
             </Col>
             <Col xs={6} className="d-flex justify-content-end">
               {/* Added navigation buttons to top bar */}
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleSearch}
-                style={{
-                  background: "rgba(67, 97, 238, 0.15)",
-                  border: "1px solid rgba(67, 97, 238, 0.3)",
-                  color: "#4361ee",
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontSize: "0.9rem",
-                  fontWeight: "600",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  marginRight: "10px"
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="#4361ee" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M21 21L16.65 16.65" stroke="#4361ee" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Search
-              </motion.button>
-
-              <motion.button 
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleLogout}
-                style={{
-                  background: "rgba(233, 69, 96, 0.15)",
-                  border: "1px solid rgba(233, 69, 96, 0.3)",
-                  color: "#e94560",
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontSize: "0.9rem",
-                  fontWeight: "600",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px"
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M15 8L19 12M19 12L15 16M19 12H9M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="#e94560" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Logout
-              </motion.button>
             </Col>
           </Row>
         </Container>
@@ -369,7 +332,6 @@ const Profile = () => {
                 {[
                   { id: "profile", label: "Profile", icon: "👤" },
                   { id: "activity", label: "Activity", icon: "📊" },
-                  { id: "settings", label: "Settings", icon: "⚙️" }
                 ].map((item) => (
                   <div 
                     key={item.id}
@@ -650,7 +612,7 @@ const Profile = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/community')}
+                    onClick={navigateToCommunity}
                     style={{
                       width: '80%',
                       maxWidth: '400px',
@@ -672,49 +634,10 @@ const Profile = () => {
                     👥 Join Community Groups
                   </motion.button>
                   
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/groupchat')}
-                    style={{
-                      width: '80%',
-                      maxWidth: '400px',
-                      background: "linear-gradient(135deg, #e94560, #c81d4e)",
-                      border: "none",
-                      padding: "20px",
-                      borderRadius: "12px",
-                      color: "#fff",
-                      cursor: "pointer",
-                      fontSize: "1.1rem",
-                      fontWeight: "600",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "12px",
-                      boxShadow: "0 8px 16px rgba(233, 69, 96, 0.3)"
-                    }}
-                  >
-                    💬 Open Group Chat
-                  </motion.button>
+                  
                 </div>
               )}
 
-              {activeTab === "settings" && (
-                <div style={{
-                  background: "rgba(255,255,255,0.03)",
-                  borderRadius: "16px",
-                  border: "1px solid rgba(255,255,255,0.05)",
-                  padding: "1.5rem",
-                  textAlign: "center"
-                }}>
-                  <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>⚙️</div>
-                  <h4 style={{ fontWeight: "600", marginBottom: "0.5rem" }}>Settings Coming Soon</h4>
-                  <p style={{ opacity: 0.7, maxWidth: "500px", margin: "0 auto" }}>
-                    We're working on adding more settings and customization options.
-                    Check back soon to personalize your experience.
-                  </p>
-                </div>
-              )}
             </motion.div>
           </Col>
         </Row>

@@ -110,22 +110,7 @@ const Navbar = () => {
           </ul>
           
           <div className="d-flex gap-2">
-            <Link 
-              to="/signup" 
-              className="btn"
-              style={{
-                background: "#e94560",
-                color: "#ffffff",
-                fontWeight: "600",
-                padding: "8px 22px",
-                borderRadius: "50px",
-                boxShadow: "0 4px 15px rgba(233, 69, 96, 0.25)",
-                border: "none",
-                transition: "all 0.3s ease"
-              }}
-            >
-              Sign Up
-            </Link>
+            
           </div>
         </div>
       </div>

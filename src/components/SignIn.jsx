@@ -34,13 +34,18 @@ function SignIn() {
       });
 
       const data = await response.json();
-      localStorage.setItem("userEmail", formData.email);
-      localStorage.setItem("usertoken", data.token);
-
+      
       if (response.ok) {
+        localStorage.setItem("userEmail", formData.email);
+        localStorage.setItem("userToken", data.token); // Fix: usertoken -> userToken
         setSuccessMessage("Login successful! Redirecting...");
+        
+        // Check if there's a redirect path stored
+        const redirectPath = localStorage.getItem("redirectPath");
+        localStorage.removeItem("redirectPath"); // Clear the stored path
+        
         setTimeout(() => {
-          window.location.href = "/profile";
+          navigate(redirectPath || "/profile");
         }, 2000);
       } else {
         setError(data.message || "Invalid email or password.");
@@ -48,7 +53,6 @@ function SignIn() {
     } catch (error) {
       setError("Something went wrong. Please try again.");
     }
-
     setLoading(false);
   };
 
