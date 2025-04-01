@@ -3,13 +3,17 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./components/Home";
 import SearchResults from "./components/SearchResults";
-import PaperDetails from "./components/PaperDetails";
 import Footer from "./components/Footer";
 import ScraperResults from "./components/ScraperResults";
 import SignUp from "./components/SignUp";
 import SignIn from "./components/SignIn";
 import Getstarted from "./components/Getstarted";
 import About from "./components/About";
+import Profile from "./components/Profile";
+import ProfilePage from "./components/Profile";
+import Community from "./components/Community";
+import GroupChat from "./components/GroupChat";
+
 
 
 const App = () => {
@@ -20,12 +24,16 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Home/>} />
           <Route path="/search" element={<SearchResults/>} />
-          <Route path="/paper/:id" element={<PaperDetails />} />
           <Route path="/scraper-results" element={<ScraperResults />} />
           <Route path="/signup" element={<SignUp/>}/>
           <Route path="/signin"element={<SignIn/>}/>
           <Route path="/get"element={<Getstarted/>}/>
           <Route path="/about"element={<About/>}/>
+          <Route path="/profile"element={<Profile/>}/>
+          <Route path="/community"element={<Community/>}/>
+          <Route path="/groupchat"element={<GroupChat/>}/>
+          
+          {/* Add more routes as needed */}
         </Routes>
       </div>
       <Footer/>

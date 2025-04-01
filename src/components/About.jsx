@@ -132,7 +132,7 @@ const About = () => {
                 marginBottom: "1.5rem",
                 color: "#ffffff"
               }}>
-                <span style={{ color: "#4361ee" }}>Story</span>
+                <span style={{ color: "#4361ee" }}></span>
               </h1>
               
               <p style={{ 

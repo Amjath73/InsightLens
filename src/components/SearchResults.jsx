@@ -9,6 +9,8 @@ const SearchResults = () => {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [directLinkLoading, setDirectLinkLoading] = useState({});
   const navigate = useNavigate();
 
   const handleSearch = async () => {
@@ -51,6 +53,40 @@ const SearchResults = () => {
     }
   };
 
+  const handleViewPaper = async (paper, index) => {
+    if (paper.link) {
+      window.open(paper.link, '_blank');
+      return;
+    }
+
+    setDirectLinkLoading(prev => ({ ...prev, [index]: true }));
+    try {
+      const response = await fetch('http://127.0.0.1:5001/api/paper-direct-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          title: paper.title,
+          authors: paper.authors,
+          source: paper.source 
+        })
+      });
+
+      const data = await response.json();
+      if (data.directUrl) {
+        window.open(data.directUrl, '_blank');
+      } else {
+        alert('Could not find direct link to paper');
+      }
+    } catch (error) {
+      console.error('Error getting direct link:', error);
+      alert('Error accessing paper');
+    } finally {
+      setDirectLinkLoading(prev => ({ ...prev, [index]: false }));
+    }
+  };
+
   const openSummaryWindow = (title, summary) => {
     const newWindow = window.open("", "_blank", "width=600,height=400");
     newWindow.document.write(`
@@ -66,11 +102,145 @@ const SearchResults = () => {
             }
             h2 { color: #e94560; }
             p { line-height: 1.6; }
+            .controls {
+              display: flex;
+              gap: 10px;
+              margin-bottom: 20px;
+            }
+            button {
+              background: #4361ee;
+              border: none;
+              padding: 8px 16px;
+              border-radius: 8px;
+              color: white;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+            button:hover {
+              opacity: 0.9;
+            }
+            button:disabled {
+              background: #666;
+              cursor: not-allowed;
+            }
+            .speech-status {
+              color: #e94560;
+              font-size: 0.9rem;
+              margin-top: 10px;
+            }
           </style>
         </head>
         <body>
           <h2>${title}</h2>
-          <p>${summary}</p>
+          <div class="controls">
+            <button id="playButton" onclick="toggleSpeech()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              Play
+            </button>
+            <button id="pauseButton" onclick="pauseSpeech()" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+              </svg>
+              Pause
+            </button>
+            <button id="stopButton" onclick="stopSpeech()" disabled>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M6 6h12v12H6z"/>
+              </svg>
+              Stop
+            </button>
+          </div>
+          <p id="summaryText">${summary}</p>
+          <div id="status" class="speech-status"></div>
+
+          <script>
+            let speech = null;
+            let isPaused = false;
+            const playBtn = document.getElementById('playButton');
+            const pauseBtn = document.getElementById('pauseButton');
+            const stopBtn = document.getElementById('stopButton');
+            const status = document.getElementById('status');
+
+            function toggleSpeech() {
+              if (speech && !isPaused) {
+                return;
+              }
+
+              if (isPaused) {
+                speech.resume();
+                isPaused = false;
+                updateStatus('Reading...');
+                return;
+              }
+
+              speech = new SpeechSynthesisUtterance();
+              speech.text = document.getElementById('summaryText').textContent;
+              speech.rate = 0.9;
+              speech.pitch = 1;
+              
+              speech.onstart = () => {
+                playBtn.disabled = true;
+                pauseBtn.disabled = false;
+                stopBtn.disabled = false;
+                updateStatus('Reading...');
+              };
+
+              speech.onend = () => {
+                resetControls();
+                updateStatus('Finished reading');
+              };
+
+              speech.onpause = () => {
+                updateStatus('Paused');
+              };
+
+              speech.onresume = () => {
+                updateStatus('Reading...');
+              };
+
+              window.speechSynthesis.speak(speech);
+            }
+
+            function pauseSpeech() {
+              if (speech) {
+                window.speechSynthesis.pause();
+                isPaused = true;
+                playBtn.disabled = false;
+                updateStatus('Paused');
+              }
+            }
+
+            function stopSpeech() {
+              if (speech) {
+                window.speechSynthesis.cancel();
+                resetControls();
+                updateStatus('Stopped');
+              }
+            }
+
+            function resetControls() {
+              playBtn.disabled = false;
+              pauseBtn.disabled = true;
+              stopBtn.disabled = true;
+              isPaused = false;
+              speech = null;
+            }
+
+            function updateStatus(message) {
+              status.textContent = message;
+            }
+
+            // Cleanup when window closes
+            window.onbeforeunload = () => {
+              if (speech) {
+                window.speechSynthesis.cancel();
+              }
+            };
+          </script>
         </body>
       </html>
     `);
@@ -344,12 +514,14 @@ const SearchResults = () => {
                         display: "flex",
                         flexDirection: "column",
                         transition: "transform 0.3s, box-shadow 0.3s",
-                        boxShadow: "0 10px 30px rgba(0,0,0,0.15)"
+                        boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+                        position: "relative"
                       }}
                       whileHover={{
                         y: -5,
                         boxShadow: "0 15px 30px rgba(0,0,0,0.25)"
                       }}
+                      onClick={() => handleViewPaper(paper, index)}
                     >
                       <div style={{ 
                         height: "150px",
@@ -431,6 +603,23 @@ const SearchResults = () => {
                           )}
                         </motion.button>
                       </div>
+                      {directLinkLoading[index] && (
+                        <div style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          background: 'rgba(0,0,0,0.7)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '12px',
+                          zIndex: 10
+                        }}>
+                          <Spinner animation="border" variant="light" />
+                        </div>
+                      )}
                     </motion.div>
                   </Col>
                 ))
@@ -496,7 +685,7 @@ const SearchResults = () => {
           }}
         >
           <p style={{ opacity: 0.6, fontSize: "0.9rem" }}>
-            InsightLens Research Platform — Discover knowledge faster with AI assistance
+            InsightLens Research Platform — Discover knowledge faster
           </p>
           <div className="d-flex justify-content-center gap-4 mt-3">
             {[""].map((item, i) => (

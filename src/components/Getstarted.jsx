@@ -12,7 +12,8 @@ const Getstarted = () => {
       minHeight: "100vh",
       color: "#ffffff",
       overflow: "hidden",
-      position: "relative"
+      position: "relative",
+      paddingTop: "80px"
     }}>
       {/* Animated background elements */}
       <div className="background-elements" style={{ position: "absolute", inset: 0, overflow: "hidden", zIndex: 0 }}>
@@ -122,7 +123,7 @@ const Getstarted = () => {
                   marginBottom: "2rem",
                   opacity: 0.8
                 }}>
-                  Join thousands of researchers who accelerate their discoveries with AI-powered analysis.
+                  Join thousands of researchers who accelerate their discoveries.
                 </p>
               </motion.div>
 
@@ -139,7 +140,7 @@ const Getstarted = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                
+
                 <div className="d-flex flex-column gap-3 mt-4">
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}

@@ -34,12 +34,13 @@ function SignIn() {
       });
 
       const data = await response.json();
+      localStorage.setItem("userEmail", formData.email);
       localStorage.setItem("usertoken", data.token);
 
       if (response.ok) {
         setSuccessMessage("Login successful! Redirecting...");
         setTimeout(() => {
-          window.location.href = "/search";
+          window.location.href = "/profile";
         }, 2000);
       } else {
         setError(data.message || "Invalid email or password.");
