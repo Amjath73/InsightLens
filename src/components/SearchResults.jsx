@@ -247,6 +247,12 @@ const SearchResults = () => {
     newWindow.document.close();
   };
 
+  const handleProfileClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate("/profile");
+  };
+
   return (
     <div style={{ 
       background: "#1a1a2e", 
@@ -334,21 +340,29 @@ const SearchResults = () => {
               </span>
             </div>
           </Col>
-          <Col xs={6} md={8} className="d-flex justify-content-end">
-            <motion.div 
-              className="d-flex align-items-center"
-              whileHover={{ scale: 1.05 }}
+          <Col xs={6} md={8} className="d-flex justify-content-end gap-3">
+            <button
+              onClick={handleProfileClick}
               style={{
-                background: "rgba(255,255,255,0.05)",
-                backdropFilter: "blur(5px)",
-                padding: "6px 16px",
+                background: "rgba(233, 69, 96, 0.15)",
+                border: "1px solid rgba(233, 69, 96, 0.3)",
+                padding: "8px 16px",
                 borderRadius: "8px",
-                cursor: "pointer"
+                color: "#e94560",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "0.9rem",
+                fontWeight: "600",
+                zIndex: 100
               }}
-              onClick={() => navigate("/")}
             >
-              <span style={{ opacity: 0.8 }}>Home</span>
-            </motion.div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+              </svg>
+              Back to Profile
+            </button>
           </Col>
         </Row>
       </motion.div>

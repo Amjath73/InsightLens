@@ -6,8 +6,9 @@ import { useNavigate } from "react-router-dom";
 const Home = () => {
   const navigate = useNavigate();
 
-  // Function to handle navigation
-  const handleGetStarted = () => {
+  const handleGetStarted = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     navigate("/get");
   };
 
@@ -181,24 +182,26 @@ const Home = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8, duration: 0.6 }}
               >
-                 <button 
-      onClick={handleGetStarted}
-      className="get-started-btn text-white font-semibold px-8 py-3 rounded-full shadow-lg transition-all duration-300 ease-in-out cursor-pointer"
-      style={{
-        backgroundColor: "#e94560",
-        boxShadow: "0 10px 20px rgba(233, 69, 96, 0.3)"
-      }}
-      onMouseOver={(e) => {
-        e.currentTarget.style.transform = "translateY(-3px)";
-        e.currentTarget.style.boxShadow = "0 15px 25px rgba(233, 69, 96, 0.4)";
-      }}
-      onMouseOut={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 10px 20px rgba(233, 69, 96, 0.3)";
-      }}
-    >
-      Get Started Free
-    </button>
+                <motion.button 
+                  onClick={handleGetStarted}
+                  whileHover={{ scale: 1.05, y: -3 }}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    backgroundColor: "#e94560",
+                    color: "white",
+                    padding: "12px 32px",
+                    borderRadius: "8px",
+                    border: "none",
+                    fontWeight: "600",
+                    fontSize: "1rem",
+                    cursor: "pointer",
+                    boxShadow: "0 10px 20px rgba(233, 69, 96, 0.3)",
+                    transition: "all 0.3s ease",
+                    zIndex: 10
+                  }}
+                >
+                  Get Started Free
+                </motion.button>
               </motion.div>
             </motion.div>
           </Col>

@@ -33,6 +33,7 @@ const App = () => {
           <Route path="/groupchat"element={<GroupChat/>}/>
           <Route path="/groupchat/:groupId" element={<GroupChat />} />
           <Route path="/community/group/:groupId" element={<GroupDetail />} />
+          <Route path="/group-chat" element={<GroupChat />} />
           
           {/* Add more routes as needed */}
         </Routes>
