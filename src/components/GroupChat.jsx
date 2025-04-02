@@ -1,195 +1,265 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Add this import
 import io from "socket.io-client";
 import axios from "axios";
 
-const socket = io.connect("http://localhost:5000");
+const socket = io("http://localhost:5000", {
+  withCredentials: true,
+  transports: ['websocket']
+});
 
-function GroupChat() {
-  const [joinedGroups, setJoinedGroups] = useState([]);
-  const [selectedGroup, setSelectedGroup] = useState(null);
+function GroupChat({ groupId }) {
+  const navigate = useNavigate(); // Add this
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [groupName, setGroupName] = useState(""); // Add state for group name
 
-  // Fetch joined groups
   useEffect(() => {
-    const fetchJoinedGroups = async () => {
+    const token = localStorage.getItem("userToken");
+    if (token) {
       try {
-        const token = localStorage.getItem("userToken");
-        const response = await axios.get("http://localhost:5000/api/users/joined-groups", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setJoinedGroups(response.data);
+        const decoded = JSON.parse(atob(token.split('.')[1]));
+        setUserId(decoded.userId);
       } catch (err) {
-        console.error("Error fetching joined groups:", err);
-        setError("Failed to load joined groups");
+        console.error("Error decoding token:", err);
       }
-    };
-    fetchJoinedGroups();
+    }
   }, []);
 
-  // Handle group selection and messages
   useEffect(() => {
-    if (!selectedGroup) return;
+    if (!groupId) return;
 
-    const fetchMessages = async () => {
+    const token = localStorage.getItem("userToken");
+    if (!token) return;
+
+    // Fetch group details and messages
+    const initializeChat = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/messages/${selectedGroup._id}`);
-        setMessages(response.data);
+        // Fetch group details
+        const groupResponse = await axios.get(
+          `http://localhost:5000/api/groups/${groupId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setGroupName(groupResponse.data.name);
+
+        // Fetch messages
+        const messagesResponse = await axios.get(
+          `http://localhost:5000/api/messages/group/${groupId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setMessages(messagesResponse.data);
+        
+        socket.emit("joinGroup", groupId);
       } catch (err) {
-        console.error("Error fetching messages:", err);
-        setError("Failed to load messages");
+        console.error("Error initializing chat:", err);
+        setError("Failed to load chat");
       }
     };
 
-    socket.emit("joinGroup", selectedGroup._id);
-    fetchMessages();
+    initializeChat();
 
-    socket.on("receiveMessage", (newMessage) => {
-      setMessages(prev => [...prev, newMessage]);
-    });
+    // Set up socket listener for new messages
+    const handleNewMessage = (newMessage) => {
+      console.log('Received new message:', newMessage);
+      setMessages(prevMessages => [...prevMessages, newMessage]);
+    };
+
+    socket.on("receiveMessage", handleNewMessage);
 
     return () => {
-      socket.emit("leaveGroup", selectedGroup._id);
-      socket.off("receiveMessage");
+      socket.emit("leaveGroup", groupId);
+      socket.off("receiveMessage", handleNewMessage);
     };
-  }, [selectedGroup]);
+  }, [groupId]);
 
   const sendMessage = async () => {
-    if (!message.trim() || !selectedGroup) return;
+    if (!message.trim() || !groupId || !userId) return;
 
     try {
       const token = localStorage.getItem("userToken");
-      const msgData = {
-        groupId: selectedGroup._id,
-        content: message
-      };
+      if (!token) {
+        setError("Please sign in to send messages");
+        return;
+      }
 
-      await axios.post(`http://localhost:5000/api/messages/${selectedGroup._id}`, msgData, {
-        headers: { Authorization: `Bearer ${token}` }
+      // Send message through socket
+      socket.emit('sendMessage', {
+        groupId,
+        content: message,
+        token
       });
 
-      socket.emit("sendMessage", msgData);
+      // Clear input immediately for better UX
       setMessage("");
+
+      // Post to API for persistence
+      await axios.post(
+        'http://localhost:5000/api/messages',
+        {
+          content: message,
+          group: groupId
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
     } catch (err) {
       console.error("Error sending message:", err);
-      setError("Failed to send message");
+      setError(err.response?.data?.message || "Failed to send message");
     }
   };
 
-  if (error) {
-    return <div style={{ color: 'red' }}>{error}</div>;
-  }
-
   return (
     <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
-      <div style={{ display: "flex", gap: "20px", height: "80vh" }}>
-        {/* Groups sidebar */}
-        <div style={{ 
-          width: "250px", 
-          background: "rgba(255,255,255,0.05)",
-          borderRadius: "10px",
-          padding: "15px"
-        }}>
-          <h3 style={{ marginBottom: "15px" }}>Your Groups</h3>
-          {joinedGroups.length === 0 ? (
-            <p>No groups joined yet</p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {joinedGroups.map(group => (
-                <div
-                  key={group._id}
-                  onClick={() => setSelectedGroup(group)}
+      <div style={{ display: "flex", flexDirection: "column", height: "80vh" }}>
+        {groupId ? (
+          <>
+            <div style={{ 
+              marginBottom: "20px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start"
+            }}>
+              {/* Group title and subtitle */}
+              <div>
+                <h2 style={{ 
+                  color: "#fff",
+                  fontSize: "1.8rem",
+                  fontWeight: "600",
+                  marginBottom: "4px"
+                }}>
+                  {groupName || "Loading..."}
+                </h2>
+                <p style={{
+                  color: "rgba(255,255,255,0.6)",
+                  fontSize: "0.9rem",
+                  margin: "0",
+                  fontWeight: "500"
+                }}>
+                  Research-based Discussion Forum
+                </p>
+              </div>
+
+              {/* Back button aligned to right */}
+              <button
+                onClick={() => navigate("/community")}
+                style={{
+                  background: "rgba(233, 69, 96, 0.15)",
+                      border: "1px solid rgba(233, 69, 96, 0.3)",
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      color: "#e94560",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontSize: "0.9rem",
+                      fontWeight: "600",
+                  marginLeft: "auto"
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back to Community
+              </button>
+            </div>
+
+            {/* Messages section */}
+            <div style={{ 
+              flex: 1, 
+              overflowY: "auto",
+              background: "rgba(255,255,255,0.05)",
+              borderRadius: "10px",
+              padding: "20px",
+              marginBottom: "20px"
+            }}>
+              {messages.map((msg, index) => (
+                <div 
+                  key={msg._id || index}
                   style={{
-                    padding: "10px",
-                    background: selectedGroup?._id === group._id ? 
-                      "rgba(67, 97, 238, 0.3)" : 
-                      "rgba(255,255,255,0.1)",
+                    background: "rgba(255,255,255,0.1)",
+                    padding: "15px",
                     borderRadius: "8px",
-                    cursor: "pointer"
+                    marginBottom: "10px"
                   }}
                 >
-                  {group.name}
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: "5px"
+                  }}>
+                    <span style={{
+                      fontWeight: "600",
+                      color: "#f96798", // Changed to a bright cyan color
+                      fontSize: "0.95rem"
+                    }}>
+                      {msg.sender?.name || "Anonymous"}
+                    </span>
+                    <span style={{
+                      fontSize: "0.8rem",
+                      color: "rgba(255,255,255,0.6)"
+                    }}>
+                      {new Date(msg.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                  <div style={{ 
+                    wordBreak: "break-word",
+                    color: "#ffffff"
+                  }}>
+                    {msg.content}
+                  </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
 
-        {/* Chat area */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          {selectedGroup ? (
-            <>
-              <div style={{ marginBottom: "20px" }}>
-                <h2>{selectedGroup.name}</h2>
-              </div>
-
-              <div style={{ 
-                flex: 1, 
-                overflowY: "auto",
-                background: "rgba(255,255,255,0.05)",
-                borderRadius: "10px",
-                padding: "20px",
-                marginBottom: "20px"
-              }}>
-                {messages.map((msg, index) => (
-                  <div 
-                    key={index}
-                    style={{
-                      background: "rgba(255,255,255,0.1)",
-                      padding: "10px",
-                      borderRadius: "8px",
-                      marginBottom: "10px"
-                    }}
-                  >
-                    {msg.content}
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: "flex", gap: "10px" }}>
-                <input
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                  placeholder="Type a message"
-                  style={{
-                    flex: 1,
-                    padding: "10px",
-                    borderRadius: "5px",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    background: "rgba(255,255,255,0.1)",
-                    color: "white"
-                  }}
-                />
-                <button 
-                  onClick={sendMessage}
-                  style={{
-                    padding: "10px 20px",
-                    background: "#4361ee",
-                    border: "none",
-                    borderRadius: "5px",
-                    color: "white",
-                    cursor: "pointer"
-                  }}
-                >
-                  Send
-                </button>
-              </div>
-            </>
-          ) : (
-            <div style={{ 
-              display: "flex", 
-              alignItems: "center", 
-              justifyContent: "center",
-              height: "100%",
-              fontSize: "1.2rem",
-              color: "rgba(255,255,255,0.6)"
-            }}>
-              Select a group to start chatting
+            <div style={{ display: "flex", gap: "10px" }}>
+              <input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                placeholder="Type a message"
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  borderRadius: "5px",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  background: "rgba(255,255,255,0.1)",
+                  color: "white"
+                }}
+              />
+              <button 
+                onClick={sendMessage}
+                style={{
+                  padding: "10px 20px",
+                  background: "#4361ee",
+                  border: "none",
+                  borderRadius: "5px",
+                  color: "white",
+                  cursor: "pointer"
+                }}
+              >
+                Send
+              </button>
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <div style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center",
+            height: "100%",
+            fontSize: "1.2rem",
+            color: "rgba(255,255,255,0.6)"
+          }}>
+            Select a group to start chatting
+          </div>
+        )}
       </div>
     </div>
   );
